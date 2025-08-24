@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AEB Industrial Design System - Professional electrical industry theme */
+
+@layer base {
+  :root {
+    /* AEB Brand Colors - HSL Format */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+    
+    /* AEB Orange Brand Colors */
+    --primary: 14 100% 60%;        /* AEB Orange #FF6B35 */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 14 100% 75%;   /* Lighter orange for effects */
+    
+    /* Professional Industrial Palette */
+    --secondary: 0 0% 15%;         /* Dark charcoal */
+    --secondary-foreground: 0 0% 95%;
+    
+    --accent: 14 100% 60%;         /* Orange accent */
+    --accent-foreground: 0 0% 100%;
+    
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 35%;
+    
+    /* Interactive Elements */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    
+    /* Status Colors */
+    --success: 142 76% 36%;        /* Professional green */
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 60%;        /* Professional yellow */
+    --warning-foreground: 0 0% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders and Inputs */
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 14 100% 60%;
+    --radius: 0.75rem;
+    
+    /* Professional Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(14 100% 60%), hsl(14 100% 75%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 20%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 97%));
+    
+    /* Professional Shadows */
+    --shadow-soft: 0 2px 10px hsla(0, 0%, 0%, 0.1);
+    --shadow-medium: 0 8px 30px hsla(0, 0%, 0%, 0.12);
+    --shadow-strong: 0 20px 50px hsla(0, 0%, 0%, 0.15);
+    --shadow-glow: 0 0 30px hsla(14, 100%, 60%, 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .dark {
+    /* AEB Dark Mode - Industrial theme */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+    
+    /* Cards and surfaces in dark mode */
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+    
+    /* Orange remains vibrant in dark mode */
+    --primary: 14 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 14 100% 75%;
+    
+    /* Dark secondary colors */
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 90%;
+    
+    --accent: 14 100% 60%;
+    --accent-foreground: 0 0% 100%;
+    
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    
+    /* Dark borders and inputs */
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 14 100% 60%;
+    
+    /* Update gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(14 100% 60%), hsl(14 100% 75%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 15%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 12%), hsl(0 0% 15%));
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  
+  /* Kiosk specific optimizations for 43" vertical screen */
+  .kiosk-container {
+    min-height: 100vh;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+}
+
+/* Custom Industrial Components */
+@layer components {
+  .industrial-card {
+    @apply bg-gradient-to-br from-card to-muted/30 border-2 border-border/50 rounded-xl;
+    box-shadow: var(--shadow-medium);
+    transition: var(--transition-smooth);
+  }
+  
+  .industrial-card:hover {
+    @apply border-primary/30;
+    box-shadow: var(--shadow-strong), var(--shadow-glow);
+    transform: translateY(-2px);
+  }
+  
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-dark {
+    background: var(--gradient-dark);
+  }
+  
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 20px hsla(14, 100%, 60%, 0.5);
+  }
+  
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite alternate;
+  }
+  
+  .industrial-button {
+    @apply relative overflow-hidden rounded-xl font-semibold transition-all duration-300;
+    @apply before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent;
+    @apply before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700;
+  }
+}
+
+/* Custom Animations */
+@layer utilities {
+  @keyframes pulse-glow {
+    0% { text-shadow: 0 0 20px hsla(14, 100%, 60%, 0.5); }
+    100% { text-shadow: 0 0 30px hsla(14, 100%, 60%, 0.8), 0 0 40px hsla(14, 100%, 60%, 0.3); }
+  }
+  
+  @keyframes rotate-360 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes scale-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .animate-rotate-360 {
+    animation: rotate-360 20s linear infinite;
+  }
+  
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scale-in 0.4s ease-out;
+  }
+}
