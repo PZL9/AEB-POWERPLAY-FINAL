@@ -1,8 +1,7 @@
-// api/upload-blob.ts
+// api/upload-blob.mjs
 import { handleUpload } from '@vercel/blob/client';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   console.log('[upload-blob] start', {
     method: req.method,
     url: req.url,
@@ -10,14 +9,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     contentLength: req.headers['content-length'],
     hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
   });
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
     const jsonResponse = await handleUpload({
-      body: req.body as any,
-      request: req as any,
+      body: req.body,
+      request: req,
       onBeforeGenerateToken: async () => ({
         allowedContentTypes: ['application/pdf'],
       }),
