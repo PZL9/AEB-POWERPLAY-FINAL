@@ -3,8 +3,7 @@ import { put } from '@vercel/blob';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Log para confirmar que a função correta está sendo executada
-  console.log('EXECUTANDO A VERSÃO CORRETA DA API (create-pdf-link.ts)');
+  console.log('EXECUTANDO A VERSÃO CORRETA DA API (create-pdf-link.ts v2)');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -17,8 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('Corpo da requisição está vazio.');
       return res.status(400).json({ error: 'Corpo da requisição (PDF) não encontrado.' });
     }
-    
-    console.log('Iniciando upload para o Vercel Blob...');
+
+    console.log('Iniciando upload para o Vercel Blob com req.body...');
     const blobResult = await put(filename, req.body, {
       access: 'public',
       contentType: 'application/pdf',
