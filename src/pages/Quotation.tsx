@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Gift, Zap, ShoppingCart, QrCode, Smartphone, MessageSquare } from "lucide-react";
+import { ArrowLeft, Gift, Zap, ShoppingCart, Smartphone, MessageSquare } from "lucide-react";
 import { TransformerConfig, CartItem } from "@/types/transformer";
 import { useToast } from "@/hooks/use-toast";
 import { useQuotationCounter } from "@/hooks/useQuotationCounter";
 import { calculateTransformerPrice, generateCompetitorPrices } from "@/utils/pricing";
+import { useCart } from "@/context/CartContext"; // <--- IMPORTADO
 import InteractivePrizeWheel from "@/components/InteractivePrizeWheel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import QRCode from 'qrcode';
@@ -20,6 +21,7 @@ const Quotation = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { incrementRealQuotation } = useQuotationCounter();
+  const { clearCart } = useCart(); // <--- ADICIONADO PARA LIMPAR O CARRINHO
   
   const config = location.state?.config as TransformerConfig;
   const cartItems = location.state?.cartItems as CartItem[];
@@ -83,7 +85,9 @@ const Quotation = () => {
   const handleGenerateAndShowQR = async () => {
     if (!wheelResult || !competitorPrices) return;
 
-    const representativePhone = "5511912345678"; // IMPORTANTE: Substituir pelo número real
+    // IMPORTANTE: Substitua o número abaixo pelo número de WhatsApp real do representante da AEB
+    const representativePhone = "5511934582609"; 
+    
     const orderSummary = quotationItems.map(item => 
       `${item.quantity}x Trafo ${item.config.type} ${item.config.power}kVA (${item.config.material}, ${item.config.factorK})`
     ).join('; ');
@@ -106,6 +110,7 @@ const Quotation = () => {
   };
 
   const handleNewQuotation = () => {
+    clearCart(); // <--- CORREÇÃO APLICADA AQUI
     navigate("/");
   };
 
@@ -142,11 +147,15 @@ const Quotation = () => {
 
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
+          {/* ... O resto do seu JSX permanece o mesmo ... */}
+          {/* Header */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-foreground mb-2">Orçamento Final</h1>
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
           </div>
+          {/* Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* ... Card de Resumo do Orçamento ... */}
             <Card className="industrial-card lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -193,7 +202,7 @@ const Quotation = () => {
                 )}
               </CardContent>
             </Card>
-
+            {/* ... Card da Etapa Final (Roleta/QR Code) ... */}
             <Card className="industrial-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-center gap-2 text-center">
@@ -258,6 +267,7 @@ const Quotation = () => {
               </CardContent>
             </Card>
           </div>
+          {/* Navigation */}
           <div className="flex justify-between items-center mt-12">
             <Button 
               variant="outline" 
