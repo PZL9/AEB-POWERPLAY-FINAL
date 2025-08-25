@@ -3,7 +3,6 @@ import { TransformerConfig, PricingTables } from '@/types/transformer';
 export const pricingTables: PricingTables = {
   // Os preços base permanecem os mesmos
   dry: {
-    // Mantemos esta tabela apenas por compatibilidade (não é usada para "seco" a partir daqui)
     45: 16650,
     75: 25110,
     112.5: 26640,
@@ -22,8 +21,8 @@ export const pricingTables: PricingTables = {
     3000: 272000
   },
   oil: {
+    // Mantemos esta tabela apenas por compatibilidade (não é usada para "óleo" a partir daqui)
     45: 12900,
-    // Ajuste para bater com a tabela de 15 kV: 16.000
     75: 16000,
     112.5: 19900,
     150: 22900,
@@ -34,9 +33,9 @@ export const pricingTables: PricingTables = {
     1000: 89900,
     1250: 117000,
     1500: 135000,
-    1750: 140000,
     2000: 180000,
     2500: 220000,
+    2750: 242000,
     3000: 265000
   }
 };
@@ -114,6 +113,58 @@ const dryTablesByVoltage: Record<'15kV' | '24kV' | '36kV', Record<number, number
   }
 };
 
+// TABELAS EXATAS PARA TRANSFORMADORES A ÓLEO, por classe de tensão
+const oilTablesByVoltage: Record<'15kV' | '24kV' | '36kV', Record<number, number>> = {
+  '15kV': {
+    45: 12900,
+    75: 16000,
+    112.5: 19900,
+    150: 22900,
+    225: 30900,
+    300: 37600,
+    500: 54500,
+    750: 68500,
+    1000: 89900,
+    1250: 117000,
+    1500: 135000,
+    2000: 180000,
+    2500: 220000,
+    3000: 265000
+  },
+  '24kV': {
+    45: 14190,
+    75: 17600,
+    112.5: 21890,
+    150: 25190,
+    225: 33990,
+    300: 39520,
+    500: 59950,
+    750: 75350,
+    1000: 98890,
+    1250: 128700,
+    1500: 148500,
+    2000: 198000,
+    2500: 242000,
+    3000: 291500
+  },
+  '36kV': {
+    45: 15609,
+    75: 19360,
+    112.5: 24080,
+    150: 27700,
+    225: 37391,
+    300: 43800,
+    500: 65900,
+    750: 82900,
+    1000: 108700,
+    1250: 141570,
+    1500: 163350,
+    2000: 217800,
+    2500: 266200,
+    3000: 320650
+  }
+};
+
 export const calculateTransformerPrice = (config: TransformerConfig, applySurcharges: boolean = true): number => {
   if (!config || typeof config.power !== 'number') return 0;
 
@@ -124,23 +175,14 @@ export const calculateTransformerPrice = (config: TransformerConfig, applySurcha
     const table = dryTablesByVoltage[voltageKey];
     basePrice = table[config.power] || 0;
   } else {
-    const baseTable = pricingTables.oil;
-    basePrice = baseTable[config.power] || 0;
+    // Para óleo, usa tabelas exatas por classe de tensão
+    const voltageKey = (config.inputVoltage === '36kV') ? '36kV' : (config.inputVoltage === '24kV' ? '24kV' : '15kV');
+    const table = oilTablesByVoltage[voltageKey];
+    basePrice = table[config.power] || 0;
   }
 
   // REMOVIDO: acréscimo de +10% para "seco". Os valores da tabela já são finais.
-
-  // NOVO: Diferenciação por classe de tensão (kV) APENAS para óleo, conforme tabela enviada
-  // Base: 15 kV (sem acréscimo)
-  // 25 kV (ou 24 kV no sistema): +10%
-  // 36 kV: +21%
-  if (config.type === "oil") {
-    if (config.inputVoltage === "24kV") {
-      basePrice *= 1.10;
-    } else if (config.inputVoltage === "36kV") {
-      basePrice *= 1.21;
-    }
-  }
+  // REMOVIDO: multiplicadores por tensão para óleo. Os valores da tabela já são finais.
 
   if (!applySurcharges) return Math.round(basePrice);
 
