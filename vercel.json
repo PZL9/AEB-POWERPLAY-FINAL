@@ -1,9 +1,6 @@
 {
     "functions": {
-      "api/**/*.cjs": {
-        "runtime": "nodejs18.x"
-      },
-      "api/**/*.js": {
+      "api/upload-blob.cjs": {
         "runtime": "nodejs18.x"
       }
     }
