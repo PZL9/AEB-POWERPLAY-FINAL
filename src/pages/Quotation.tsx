@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { upload } from '@vercel/blob/client'; // Importante: nova importação
+import { upload } from '@vercel/blob/client'; // Importação crucial
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -85,7 +85,7 @@ const Quotation = () => {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
       const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      // Nova lógica de upload direto do cliente
+      // **NOVA LÓGICA DE UPLOAD**
       const newBlob = await upload(filename, pdfBlob, {
         access: 'public',
         handleUploadUrl: '/api/upload-blob', // Aponta para a nova API
@@ -121,6 +121,7 @@ const Quotation = () => {
     return null;
   }
 
+  // O restante do seu componente (o return com o JSX) continua exatamente o mesmo
   return (
     <>
       <PDFQRCodeDialog

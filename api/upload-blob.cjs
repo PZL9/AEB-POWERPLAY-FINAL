@@ -7,27 +7,24 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Esta função segura da Vercel gera o link de upload
     const jsonResponse = await handleUpload({
       body: req.body,
       request: req,
-      onBeforeGenerateToken: async (pathname /*, clientPayload */) => {
-        // Gera um token de acesso para o upload
+      onBeforeGenerateToken: async (pathname) => {
         return {
           allowedContentTypes: ['application/pdf'],
-          tokenPayload: JSON.stringify({
-            // Você pode adicionar metadados aqui se precisar
-          }),
+          tokenPayload: JSON.stringify({ filename: pathname }),
         };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
-        // Chamado após o upload ser concluído
         console.log('Upload do blob concluído', blob);
       },
     });
 
     return res.status(200).json(jsonResponse);
   } catch (error) {
-    console.error('ERRO NO HANDLE UPLOAD:', error);
-    return res.status(500).json({ error: 'Falha ao processar o upload.' });
+    console.error('ERRO AO GERAR TOKEN DE UPLOAD:', error);
+    return res.status(500).json({ error: 'Falha ao gerar o link de upload.' });
   }
 };
