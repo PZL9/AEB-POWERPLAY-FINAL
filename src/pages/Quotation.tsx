@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { upload } from '@vercel/blob/client'; // Importante: nova importação
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -84,24 +85,11 @@ const Quotation = () => {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
       const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      const response = await fetch(`/api/upload-handler?filename=${filename}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/pdf' },
-        body: pdfBlob,
+      // Nova lógica de upload direto do cliente
+      const newBlob = await upload(filename, pdfBlob, {
+        access: 'public',
+        handleUploadUrl: '/api/upload-blob', // Aponta para a nova API
       });
-      
-      if (!response.ok) {
-        let errorDetails = `Erro no servidor: ${response.statusText}`;
-        try {
-          const errorJson = await response.json();
-          errorDetails = errorJson.details || errorJson.error || response.statusText;
-        } catch (e) {
-          console.error("A resposta da API não era um JSON válido.");
-        }
-        throw new Error(`Falha no upload: ${errorDetails}`);
-      }
-
-      const newBlob = await response.json();
 
       if (newBlob.url) {
         setPublicUrl(newBlob.url);
@@ -143,6 +131,7 @@ const Quotation = () => {
       />
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
+          {/* O layout da página permanece o mesmo... */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-foreground mb-2">Orçamento Final</h1>
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
