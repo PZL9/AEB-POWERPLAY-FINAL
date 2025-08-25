@@ -1,6 +1,7 @@
 import { TransformerConfig, PricingTables } from '@/types/transformer';
 
 export const pricingTables: PricingTables = {
+  // Os preços base permanecem os mesmos
   dry: {
     45: 16650,
     75: 25110,
@@ -45,9 +46,15 @@ export const calculateTransformerPrice = (config: TransformerConfig, applySurcha
   const baseTable = config.type === "dry" ? pricingTables.dry : pricingTables.oil;
   let basePrice = baseTable[config.power] || 0;
 
+  // NOVO: Aplica o acréscimo de 10% para transformadores a seco
+  // Esta é a primeira operação, garantindo que incida sobre o valor da tabela.
+  if (config.type === "dry") {
+    basePrice *= 1.10; // +10% para todos os transformadores a seco
+  }
+
   if (!applySurcharges) return Math.round(basePrice);
 
-  // Apply surcharges only when requested
+  // Aplica os outros acréscimos opcionais sobre o novo valor base
   if (config.factorK === "K4") {
     basePrice *= 1.08; // +8%
   }

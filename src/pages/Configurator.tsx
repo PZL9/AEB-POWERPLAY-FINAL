@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Zap, Leaf, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Zap, Leaf, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TransformerConfig } from "@/types/transformer";
 
@@ -146,7 +146,7 @@ const Configurator = () => {
               onClick={() => updateConfig("function", "step-down")}
             >
               <CardContent className="p-8 text-center">
-                <div className="text-4xl mb-4">⬇️</div>
+                <TrendingDown className="h-16 w-16 text-primary mx-auto mb-4" />
                 <h3 className="text-2xl font-bold mb-2">Rebaixador</h3>
                 <p className="text-muted-foreground">Reduz a tensão de entrada</p>
               </CardContent>
@@ -157,7 +157,7 @@ const Configurator = () => {
               onClick={() => updateConfig("function", "step-up")}
             >
               <CardContent className="p-8 text-center">
-                <div className="text-4xl mb-4">⬆️</div>
+                <TrendingUp className="h-16 w-16 text-primary mx-auto mb-4" />
                 <h3 className="text-2xl font-bold mb-2">Elevador</h3>
                 <p className="text-muted-foreground">Aumenta a tensão de entrada</p>
               </CardContent>
@@ -209,7 +209,7 @@ const Configurator = () => {
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Alumínio</h3>
                 <Badge className="mb-3">PADRÃO</Badge>
-                <p className="text-muted-foreground">Leveza e resistência à corrosão</p>
+                <p className="text-muted-foreground">Excelente custo-benefício e maior leveza</p>
               </CardContent>
             </Card>
 

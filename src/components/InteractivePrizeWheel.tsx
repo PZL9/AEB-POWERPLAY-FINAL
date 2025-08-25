@@ -59,13 +59,18 @@ const InteractivePrizeWheel = ({ onResult, orderValue }: InteractivePrizeWheelPr
     // Calculate rotation to land on selected prize
     const prizeIndex = prizes.findIndex(p => p.name === selectedPrize.name);
     const segmentAngle = 360 / prizes.length;
-    const targetAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
+    // The target is the middle of the segment
+    const prizeAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
     
-    // Add multiple full rotations for dramatic effect
-    const fullRotations = 5 + Math.random() * 3;
-    const finalRotation = rotation + (fullRotations * 360) + (360 - targetAngle);
+    // Add multiple full rotations for dramatic effect, plus a random offset within the segment
+    const randomOffset = (Math.random() - 0.5) * (segmentAngle * 0.8);
+    const fullRotations = 5 * 360;
     
-    setRotation(finalRotation);
+    // We want the final angle to align the prize with the top pointer (0/360 degrees)
+    // The rotation is clockwise, so we rotate by (360 - angle)
+    const finalRotation = fullRotations + (360 - prizeAngle) + randomOffset;
+    
+    setRotation(rotation + finalRotation);
     
     // Wait for animation to complete
     setTimeout(() => {
@@ -81,73 +86,79 @@ const InteractivePrizeWheel = ({ onResult, orderValue }: InteractivePrizeWheelPr
     <div className="flex flex-col items-center space-y-6">
       {/* Prize Wheel */}
       <div className="relative w-80 h-80">
+        {/* Pointer */}
+        <div className="absolute top-[-4px] left-1/2 transform -translate-x-1/2 z-20">
+          <div className="w-0 h-0 
+            border-l-[12px] border-l-transparent
+            border-r-[12px] border-r-transparent
+            border-t-[20px] border-t-primary drop-shadow-lg"></div>
+        </div>
+
         {/* Wheel SVG */}
-        <svg 
-          width="320" 
-          height="320" 
-          className="drop-shadow-2xl"
+        <div 
+          className="w-full h-full"
           style={{ 
             transform: `rotate(${rotation}deg)`,
-            transition: isSpinning ? 'transform 4s cubic-bezier(0.23, 1, 0.32, 1)' : 'none'
+            transition: isSpinning ? 'transform 4s cubic-bezier(0.25, 1, 0.5, 1)' : 'none'
           }}
         >
-          {prizes.map((prize, index) => {
-            const startAngle = index * segmentAngle - 90; // Start from top
-            const endAngle = startAngle + segmentAngle;
-            
-            const x1 = 160 + 140 * Math.cos((startAngle * Math.PI) / 180);
-            const y1 = 160 + 140 * Math.sin((startAngle * Math.PI) / 180);
-            const x2 = 160 + 140 * Math.cos((endAngle * Math.PI) / 180);
-            const y2 = 160 + 140 * Math.sin((endAngle * Math.PI) / 180);
-            
-            const largeArcFlag = segmentAngle > 180 ? 1 : 0;
-            
-            const pathData = [
-              `M 160 160`,
-              `L ${x1} ${y1}`,
-              `A 140 140 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-              'Z'
-            ].join(' ');
-            
-            // Text position
-            const textAngle = startAngle + segmentAngle / 2;
-            const textX = 160 + 100 * Math.cos((textAngle * Math.PI) / 180);
-            const textY = 160 + 100 * Math.sin((textAngle * Math.PI) / 180);
-            
-            return (
-              <g key={index}>
-                <path
-                  d={pathData}
-                  fill={prize.color}
-                  stroke="#FFFFFF"
-                  strokeWidth="3"
-                  className="drop-shadow-sm"
-                />
-                <text
-                  x={textX}
-                  y={textY}
-                  fill={prize.textColor}
-                  fontSize="11"
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  transform={`rotate(${textAngle}, ${textX}, ${textY})`}
-                >
-                  {prize.name}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+          <svg 
+            width="320" 
+            height="320" 
+            className="drop-shadow-2xl"
+          >
+            {prizes.map((prize, index) => {
+              const startAngle = index * segmentAngle - 90; // Start from top
+              const endAngle = startAngle + segmentAngle;
+              
+              const x1 = 160 + 140 * Math.cos((startAngle * Math.PI) / 180);
+              const y1 = 160 + 140 * Math.sin((startAngle * Math.PI) / 180);
+              const x2 = 160 + 140 * Math.cos((endAngle * Math.PI) / 180);
+              const y2 = 160 + 140 * Math.sin((endAngle * Math.PI) / 180);
+              
+              const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+              
+              const pathData = [
+                `M 160 160`,
+                `L ${x1} ${y1}`,
+                `A 140 140 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                'Z'
+              ].join(' ');
+              
+              const textAngle = startAngle + segmentAngle / 2;
+              const textX = 160 + 90 * Math.cos((textAngle * Math.PI) / 180);
+              const textY = 160 + 90 * Math.sin((textAngle * Math.PI) / 180);
+              
+              return (
+                <g key={index}>
+                  <path
+                    d={pathData}
+                    fill={prize.color}
+                    stroke="#FFFFFF"
+                    strokeWidth="3"
+                    className="drop-shadow-sm"
+                  />
+                  <text
+                    x={textX}
+                    y={textY}
+                    fill={prize.textColor}
+                    fontSize="11"
+                    fontWeight="bold"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    transform={`rotate(${textAngle + 90}, ${textX}, ${textY})`}
+                  >
+                    {prize.name}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
         
         {/* Center Hub */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-gradient-primary rounded-full border-4 border-white shadow-xl flex items-center justify-center z-10">
           <Gift className="h-8 w-8 text-white" />
-        </div>
-        
-        {/* Pointer */}
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-yellow-400 drop-shadow-lg"></div>
         </div>
         
         {/* Spinning overlay effect */}
@@ -168,26 +179,6 @@ const InteractivePrizeWheel = ({ onResult, orderValue }: InteractivePrizeWheelPr
           {isSpinning ? "GIRANDO..." : "GIRAR ROLETA"}
         </Button>
       )}
-      
-      {/* Prize List */}
-      <div className="text-center">
-        <h4 className="text-lg font-semibold mb-3 text-foreground">Prêmios Disponíveis:</h4>
-        <div className="flex flex-wrap justify-center gap-2 max-w-md">
-          {prizes.map((prize, index) => (
-            <div
-              key={index}
-              className="px-3 py-1 rounded-full text-xs font-medium border"
-              style={{ 
-                backgroundColor: `${prize.color}20`,
-                borderColor: prize.color,
-                color: prize.color
-              }}
-            >
-              {prize.name}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
