@@ -47,8 +47,6 @@ const Quotation = () => {
     finalPrice: calculateTransformerPrice(config, true)
   }] : []);
 
-  // CORREÇÃO: A variável `totalPrice` foi movida para fora do `useEffect`
-  // para que fique acessível em todo o componente.
   const totalPrice = quotationItems.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
 
   useEffect(() => {
@@ -84,7 +82,6 @@ const Quotation = () => {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
       const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      // Chamando a API corrigida
       const response = await fetch(`/api/create-pdf-link?filename=${filename}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/pdf' },
