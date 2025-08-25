@@ -82,23 +82,22 @@ const Quotation = () => {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
       const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      // CORREÇÃO: Usando a URL completa para a chamada da API
-      const apiUrl = `${window.location.origin}/api/create-pdf-link?filename=${filename}`;
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`/api/create-pdf-link?filename=${filename}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/pdf' },
         body: pdfBlob,
       });
-
-      const responseText = await response.text();
+      
+      const responseText = await response.text(); // Primeiro, pegue a resposta como texto
       if (!response.ok) {
-        let errorDetails = "Não foi possível ler a resposta do servidor.";
+        let errorDetails = "Erro desconhecido na resposta da API.";
         try {
+           // Tente analisar o texto como JSON
           const errorJson = JSON.parse(responseText);
-          errorDetails = errorJson.error || errorJson.details || "Erro desconhecido.";
+          errorDetails = errorJson.error || errorJson.details || "A resposta da API não continha detalhes do erro.";
         } catch (e) {
-          // A resposta não era JSON, o que pode indicar um problema de infraestrutura
+          // Se não for JSON, use o texto bruto (pode ser uma página de erro HTML da Vercel)
+          errorDetails = responseText.substring(0, 100); // Limita o tamanho
           console.error("A resposta da API não era um JSON válido:", responseText);
         }
         throw new Error(`Falha no upload: ${errorDetails}`);
