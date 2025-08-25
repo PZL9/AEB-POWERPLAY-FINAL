@@ -76,28 +76,28 @@ const Quotation = () => {
     
     setIsUploading(true);
     setIsQrCodeModalOpen(true);
+    setPublicUrl(null); // Limpa a URL anterior
 
     try {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
-      
-      const formData = new FormData();
-      formData.append('file', pdfBlob, `orcamento-aeb-${Date.now()}.pdf`);
+      const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      const response = await fetch('https://file.io', {
+      // Faz o upload para a nossa nova função serverless
+      const response = await fetch(`/api/upload-pdf?filename=${filename}`, {
         method: 'POST',
-        body: formData,
+        body: pdfBlob,
       });
 
       if (!response.ok) {
         throw new Error('Falha no upload do arquivo.');
       }
 
-      const result = await response.json();
+      const newBlob = await response.json();
 
-      if (result.success) {
-        setPublicUrl(result.link);
+      if (newBlob.url) {
+        setPublicUrl(newBlob.url);
       } else {
-        throw new Error('A API de upload não retornou um link válido.');
+        throw new Error('A API não retornou uma URL válida.');
       }
 
     } catch (error) {
@@ -133,6 +133,7 @@ const Quotation = () => {
       />
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
+          {/* O restante do seu JSX (layout da página) permanece exatamente o mesmo */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-foreground mb-2">Orçamento Final</h1>
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
@@ -184,7 +185,6 @@ const Quotation = () => {
                 )}
               </CardContent>
             </Card>
-
             <Card className="industrial-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-center gap-2 text-center">
