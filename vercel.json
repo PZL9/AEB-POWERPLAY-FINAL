@@ -1,7 +1,8 @@
 {
-    "functions": {
-      "api/create-pdf-link.ts": {
-        "runtime": "edge"
+    "rewrites": [
+      {
+        "source": "/api/(.*)",
+        "destination": "/api"
       }
-    }
+    ]
   }

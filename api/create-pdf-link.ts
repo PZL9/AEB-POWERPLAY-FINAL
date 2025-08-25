@@ -1,7 +1,5 @@
 import { put } from '@vercel/blob';
 
-export const runtime = 'edge';
-
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const filename = searchParams.get('filename') || 'orcamento-aeb.pdf';
@@ -25,7 +23,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('ERRO DETALHADO NO UPLOAD:', error);
+    console.error('ERRO DETALHADO NA API:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido no servidor.';
     return new Response(JSON.stringify({ error: 'Ocorreu um erro ao salvar o PDF.', details: errorMessage }), { 
       status: 500,
