@@ -16,22 +16,16 @@ export const generateQuotationPDF = async (
   let yPos = 0;
   let pageCount = 1;
 
-  // --- CORES DA MARCA ---
-  const primaryColor = '#FF6B35'; // AEB Orange
+  const primaryColor = '#FF6B35'; 
   const darkGrayColor = '#333333';
   const lightGrayColor = '#F3F4F6';
   const textColor = '#1F2937';
   const mutedTextColor = '#6B7280';
 
   const addHeader = () => {
-    // Fundo do cabeçalho
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, pageWidth, 35, 'F');
-
-    // Logo
     doc.addImage(aebLogo, 'PNG', margin, 5, 25, 25);
-
-    // Título
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor('#FFFFFF');
@@ -42,13 +36,13 @@ export const generateQuotationPDF = async (
   const addFooter = (pageNumber: number) => {
     doc.setFontSize(9);
     doc.setTextColor(mutedTextColor);
-    const footerText = 'AEB - A Elétrica do Brasil | www.aeb.com.br | (11) 91234-5678';
+    const footerText = 'AEB - A Elétrica do Brasil | www.aeb.com.br | (11) 93458-2609';
     doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
     doc.text(`Página ${pageNumber}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
   };
 
   const checkPageBreak = (neededHeight: number) => {
-    if (yPos + neededHeight > pageHeight - 25) { // Margem inferior maior
+    if (yPos + neededHeight > pageHeight - 25) { 
       addFooter(pageCount);
       doc.addPage();
       pageCount++;
@@ -59,7 +53,6 @@ export const generateQuotationPDF = async (
 
   addHeader();
 
-  // Seção de Detalhes do Cliente
   checkPageBreak(40);
   doc.setFontSize(11);
   doc.setTextColor(textColor);
@@ -73,7 +66,6 @@ export const generateQuotationPDF = async (
   doc.text(customerPhone, margin + 62, yPos + 7);
   yPos += 20;
 
-  // Seção de Itens
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(darkGrayColor);
@@ -118,7 +110,6 @@ export const generateQuotationPDF = async (
     totalValue += item.finalPrice * item.quantity;
   });
   
-  // Seção de Resumo e Análise de Preços
   checkPageBreak(120);
   yPos += 15;
   doc.setFontSize(16);
@@ -168,7 +159,8 @@ export const generateQuotationPDF = async (
   yPos += 35;
   
   checkPageBreak(50);
-  const representativePhone = "5511912345678";
+  // NÚMERO DE WHATSAPP REAL FORNECIDO PELO USUÁRIO
+  const representativePhone = "5511934582609";
   const orderSummary = items.map(item => `${item.quantity}x Trafo ${item.config.type} ${item.config.power}kVA`).join(', ');
   const message = `Olá! Tenho interesse no orçamento que gerei no totem.\n\nResumo: ${orderSummary}\nValor Total: R$ ${totalValue.toLocaleString('pt-BR')}\nPrêmio: ${prize}\nContato: ${customerPhone}`;
   const whatsappUrl = `https://wa.me/${representativePhone}?text=${encodeURIComponent(message)}`;

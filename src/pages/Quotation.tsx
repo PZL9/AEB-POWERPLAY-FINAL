@@ -6,22 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Gift, Zap, ShoppingCart, Smartphone, MessageSquare } from "lucide-react";
+import { ArrowLeft, Gift, Zap, ShoppingCart, QrCode } from "lucide-react";
 import { TransformerConfig, CartItem } from "@/types/transformer";
 import { useToast } from "@/hooks/use-toast";
 import { useQuotationCounter } from "@/hooks/useQuotationCounter";
 import { calculateTransformerPrice, generateCompetitorPrices } from "@/utils/pricing";
-import { useCart } from "@/context/CartContext"; // <--- IMPORTADO
+import { useCart } from "@/context/CartContext";
+import { generateQuotationPDF } from "@/utils/pdfGenerator";
 import InteractivePrizeWheel from "@/components/InteractivePrizeWheel";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import QRCode from 'qrcode';
+import { PDFQRCodeDialog } from "@/components/PDFQRCodeDialog";
 
 const Quotation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { incrementRealQuotation } = useQuotationCounter();
-  const { clearCart } = useCart(); // <--- ADICIONADO PARA LIMPAR O CARRINHO
+  const { clearCart } = useCart();
   
   const config = location.state?.config as TransformerConfig;
   const cartItems = location.state?.cartItems as CartItem[];
@@ -35,8 +35,9 @@ const Quotation = () => {
     savings: number;
   } | null>(null);
   
+  const [isUploading, setIsUploading] = useState(false);
+  const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const [isQrCodeModalOpen, setIsQrCodeModalOpen] = useState(false);
-  const [qrCodeImage, setQrCodeImage] = useState('');
 
   const quotationItems: CartItem[] = cartItems || (config ? [{
     id: "single-item",
@@ -50,22 +51,14 @@ const Quotation = () => {
 
   useEffect(() => {
     if (totalPrice > 0) {
-      const configSeed = quotationItems.map(item => 
-        `${item.config.type}-${item.config.power}-${item.config.material}-${item.config.factorK}`
-      ).join('-');
-      
-      const prices = generateCompetitorPrices(totalPrice, configSeed);
-      setCompetitorPrices(prices);
+      const configSeed = quotationItems.map(item => `${item.config.type}-${item.config.power}`).join('-');
+      setCompetitorPrices(generateCompetitorPrices(totalPrice, configSeed));
     }
   }, [totalPrice, quotationItems]);
 
   const handlePhoneSubmit = () => {
     if (!phoneNumber || phoneNumber.length < 10) {
-      toast({
-        title: "Telefone inválido",
-        description: "Por favor, digite um número de WhatsApp válido.",
-        variant: "destructive"
-      });
+      toast({ title: "Telefone inválido", variant: "destructive" });
       return;
     }
     setShowWheel(true);
@@ -75,33 +68,44 @@ const Quotation = () => {
     setWheelResult(prize);
     setShowWheel(false);
     incrementRealQuotation();
-    
-    toast({
-      title: "Parabéns!",
-      description: `Você ganhou: ${prize}`,
-    });
+    toast({ title: "Parabéns!", description: `Você ganhou: ${prize}` });
   };
 
   const handleGenerateAndShowQR = async () => {
     if (!wheelResult || !competitorPrices) return;
-
-    // IMPORTANTE: Substitua o número abaixo pelo número de WhatsApp real do representante da AEB
-    const representativePhone = "5511934582609"; 
     
-    const orderSummary = quotationItems.map(item => 
-      `${item.quantity}x Trafo ${item.config.type} ${item.config.power}kVA (${item.config.material}, ${item.config.factorK})`
-    ).join('; ');
-    
-    const message = `Olá! Tenho interesse no seguinte orçamento gerado no totem da AEB:\n\n*ITENS:*\n${orderSummary}\n\n*VALOR TOTAL:* R$ ${totalPrice.toLocaleString('pt-BR')}\n*PRÊMIO GANHO:* ${wheelResult}\n\n*MEU CONTATO:* ${phoneNumber}`;
-    const whatsappUrl = `https://wa.me/${representativePhone}?text=${encodeURIComponent(message)}`;
+    setIsUploading(true);
+    setIsQrCodeModalOpen(true);
 
     try {
-      const imageUrl = await QRCode.toDataURL(whatsappUrl, { width: 400, margin: 1 });
-      setQrCodeImage(imageUrl);
-      setIsQrCodeModalOpen(true);
+      const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
+      
+      const formData = new FormData();
+      formData.append('file', pdfBlob, `orcamento-aeb-${Date.now()}.pdf`);
+
+      const response = await fetch('https://file.io', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha no upload do arquivo.');
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setPublicUrl(result.link);
+      } else {
+        throw new Error('A API de upload não retornou um link válido.');
+      }
+
     } catch (error) {
-      console.error("Failed to generate WhatsApp QR Code", error);
-      toast({ title: "Erro ao gerar QR Code", variant: "destructive" });
+      console.error(error);
+      toast({ title: "Erro ao gerar link do PDF", description: "Tente novamente.", variant: "destructive" });
+      setIsQrCodeModalOpen(false);
+    } finally {
+      setIsUploading(false);
     }
   };
   
@@ -110,7 +114,7 @@ const Quotation = () => {
   };
 
   const handleNewQuotation = () => {
-    clearCart(); // <--- CORREÇÃO APLICADA AQUI
+    clearCart();
     navigate("/");
   };
 
@@ -121,41 +125,19 @@ const Quotation = () => {
 
   return (
     <>
-      <Dialog open={isQrCodeModalOpen} onOpenChange={setIsQrCodeModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-2xl">Receba seu Orçamento</DialogTitle>
-            <DialogDescription className="text-center text-base">
-              Aponte a câmera no QR Code para iniciar a conversa no WhatsApp e receber seu PDF.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center justify-center p-4">
-            {qrCodeImage ? (
-              <img src={qrCodeImage} alt="QR Code para WhatsApp" className="rounded-lg border-4 border-primary" />
-            ) : (
-              <div className="w-64 h-64 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
-                Carregando QR Code...
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-center text-muted-foreground mt-4">
-              <Smartphone className="h-5 w-5 mr-2" />
-              <span>Escaneie para falar com um representante.</span>
-          </div>
-        </DialogContent>
-      </Dialog>
-
+      <PDFQRCodeDialog
+        publicUrl={publicUrl}
+        isLoading={isUploading}
+        open={isQrCodeModalOpen}
+        onOpenChange={setIsQrCodeModalOpen}
+      />
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
-          {/* ... O resto do seu JSX permanece o mesmo ... */}
-          {/* Header */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-foreground mb-2">Orçamento Final</h1>
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
           </div>
-          {/* Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* ... Card de Resumo do Orçamento ... */}
             <Card className="industrial-card lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -202,7 +184,7 @@ const Quotation = () => {
                 )}
               </CardContent>
             </Card>
-            {/* ... Card da Etapa Final (Roleta/QR Code) ... */}
+
             <Card className="industrial-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-center gap-2 text-center">
@@ -257,17 +239,17 @@ const Quotation = () => {
                     </div>
                     <Button 
                       onClick={handleGenerateAndShowQR}
+                      disabled={isUploading}
                       className="w-full gradient-primary text-lg py-6 h-auto"
                     >
-                      <MessageSquare className="mr-2 h-5 w-5" />
-                      RECEBER ORÇAMENTO NO WHATSAPP
+                      <QrCode className="mr-2 h-5 w-5" />
+                      {isUploading ? "GERANDO LINK..." : "GERAR QR CODE PARA PDF"}
                     </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
-          {/* Navigation */}
           <div className="flex justify-between items-center mt-12">
             <Button 
               variant="outline" 

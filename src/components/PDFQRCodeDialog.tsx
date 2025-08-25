@@ -7,36 +7,29 @@ import {
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import QRCode from 'qrcode';
-import { Smartphone } from "lucide-react";
+import { Smartphone, UploadCloud } from "lucide-react";
 
 interface PDFQRCodeDialogProps {
-  pdfBlob: Blob | null;
+  publicUrl: string | null;
+  isLoading: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const PDFQRCodeDialog = ({ pdfBlob, open, onOpenChange }: PDFQRCodeDialogProps) => {
+export const PDFQRCodeDialog = ({ publicUrl, isLoading, open, onOpenChange }: PDFQRCodeDialogProps) => {
   const [qrCodeImage, setQrCodeImage] = useState('');
 
   useEffect(() => {
-    if (pdfBlob && open) {
-      // Create a temporary URL for the Blob
-      const url = URL.createObjectURL(pdfBlob);
-      
-      QRCode.toDataURL(url, { width: 400, margin: 1 })
+    if (publicUrl && open) {
+      QRCode.toDataURL(publicUrl, { width: 400, margin: 1 })
         .then(imageUrl => {
           setQrCodeImage(imageUrl);
         })
         .catch(err => {
-          console.error("Failed to generate QR Code for PDF", err);
+          console.error("Failed to generate QR Code from public URL", err);
         });
-      
-      // Clean up the temporary URL when the component unmounts or the dialog closes
-      return () => {
-        URL.revokeObjectURL(url);
-      };
     }
-  }, [pdfBlob, open]);
+  }, [publicUrl, open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,15 +37,20 @@ export const PDFQRCodeDialog = ({ pdfBlob, open, onOpenChange }: PDFQRCodeDialog
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">Seu Orçamento está Pronto!</DialogTitle>
           <DialogDescription className="text-center text-base">
-            Aponte a câmera do seu celular para o QR Code abaixo para baixar o PDF do seu orçamento.
+            Aponte a câmera do seu celular para o QR Code abaixo para baixar o PDF.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center justify-center p-4">
-          {qrCodeImage ? (
+          {isLoading ? (
+            <div className="w-64 h-64 flex flex-col items-center justify-center text-muted-foreground">
+              <UploadCloud className="h-16 w-16 mb-4 animate-pulse" />
+              <span>Gerando link seguro...</span>
+            </div>
+          ) : qrCodeImage ? (
             <img src={qrCodeImage} alt="QR Code para baixar o PDF do orçamento" className="rounded-lg border-4 border-primary" />
           ) : (
-            <div className="w-64 h-64 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
-              Carregando QR Code...
+            <div className="w-64 h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+              Erro ao gerar QR Code.
             </div>
           )}
         </div>
