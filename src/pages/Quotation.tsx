@@ -84,7 +84,7 @@ const Quotation = () => {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
       const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      const response = await fetch(`/api/create-pdf-link?filename=${filename}`, {
+      const response = await fetch(`/api/upload-handler?filename=${filename}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/pdf' },
         body: pdfBlob,
