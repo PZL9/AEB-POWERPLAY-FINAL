@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sun, Moon, Zap, Users, Factory } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQuotationCounter } from "@/hooks/useQuotationCounter";
-import aebLogo from "@/assets/aeb-logo.png";
+import aebLogo from "@/assets/aeb-logo.png"; // <-- LINHA CORRIGIDA AQUI
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ const Welcome = () => {
         {/* Hero Title */}
         <div className="mb-12 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           <h1 className="text-6xl font-bold mb-6 text-glow">
-            <span className="bg-gradient-primary bg-clip-text text-transparent drop-shadow-lg" style={{ opacity: 0.95 }}>
+            <span className="bg-gradient-primary bg-clip-text text-transparent drop-shadow-lg">
               A ENERGIA QUE TRANSFORMA
             </span>
           </h1>

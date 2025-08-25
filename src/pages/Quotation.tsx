@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Gift, Download, Zap, ShoppingCart, QrCode } from "lucide-react";
+import { ArrowLeft, Gift, Zap, ShoppingCart, QrCode } from "lucide-react";
 import { TransformerConfig, CartItem } from "@/types/transformer";
 import { useToast } from "@/hooks/use-toast";
 import { useQuotationCounter } from "@/hooks/useQuotationCounter";
 import { calculateTransformerPrice, generateCompetitorPrices } from "@/utils/pricing";
 import { generateQuotationPDF } from "@/utils/pdfGenerator";
 import InteractivePrizeWheel from "@/components/InteractivePrizeWheel";
-import { PDFQRCodeDialog } from "@/components/PDFQRCodeDialog"; // Importe o novo componente
+import { PDFQRCodeDialog } from "@/components/PDFQRCodeDialog";
 
 const Quotation = () => {
   const location = useLocation();
@@ -33,7 +33,7 @@ const Quotation = () => {
     savings: number;
   } | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [pdfDataUri, setPdfDataUri] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isQrCodeModalOpen, setIsQrCodeModalOpen] = useState(false);
 
   const quotationItems: CartItem[] = cartItems || (config ? [{
@@ -85,14 +85,15 @@ const Quotation = () => {
     
     setIsGeneratingPDF(true);
     try {
-      const dataUri = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
-      setPdfDataUri(dataUri);
+      const blob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
+      setPdfBlob(blob);
       setIsQrCodeModalOpen(true);
       toast({
         title: "Orçamento Gerado!",
         description: "Escaneie o QR Code para baixar em seu celular.",
       });
     } catch (error) {
+      console.error(error);
       toast({
         title: "Erro ao gerar PDF",
         description: "Tente novamente em alguns instantes.",
@@ -104,7 +105,7 @@ const Quotation = () => {
   };
 
   const handleBack = () => {
-    navigate("/visualization");
+    navigate("/configurator");
   };
 
   const handleNewQuotation = () => {
@@ -119,21 +120,17 @@ const Quotation = () => {
   return (
     <>
       <PDFQRCodeDialog
-        pdfDataUri={pdfDataUri}
+        pdfBlob={pdfBlob}
         open={isQrCodeModalOpen}
         onOpenChange={setIsQrCodeModalOpen}
       />
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-foreground mb-2">Orçamento Final</h1>
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* Items Summary */}
             <Card className="industrial-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -142,7 +139,7 @@ const Quotation = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 max-h-80 overflow-y-auto">
-                {quotationItems.map((item, index) => (
+                {quotationItems.map((item) => (
                   <div key={item.id} className="border border-border/50 rounded-lg p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <div 
@@ -158,7 +155,6 @@ const Quotation = () => {
                         <p className="text-xs text-muted-foreground">{item.config.power} kVA</p>
                       </div>
                     </div>
-                    
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>Material: {item.config.material === "copper" ? "Cobre" : "Alumínio"}</div>
                       <div>Fator K: {item.config.factorK}</div>
@@ -166,56 +162,46 @@ const Quotation = () => {
                         <div className="col-span-2">Óleo: {item.config.oilType === "vegetal" ? "Vegetal" : "Mineral"}</div>
                       )}
                     </div>
-                    
                     <div className="mt-3 flex justify-between items-center">
                       <span className="text-sm">Qtd: {item.quantity}</span>
-                      <span className="font-bold text-primary">R$ {(item.finalPrice * item.quantity).toLocaleString()}</span>
+                      <span className="font-bold text-primary">R$ {(item.finalPrice * item.quantity).toLocaleString('pt-BR')}</span>
                     </div>
                   </div>
                 ))}
-                
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span className="text-primary">R$ {totalPrice.toLocaleString()}</span>
+                  <span className="text-primary">R$ {totalPrice.toLocaleString('pt-BR')}</span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Pricing Comparison */}
             <Card className="industrial-card">
               <CardHeader>
                 <CardTitle className="text-center text-primary">Comparação de Preços</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                
-                {/* AEB Price */}
                 <div className="text-center p-6 bg-gradient-primary rounded-lg">
                   <div className="text-sm font-medium mb-1 text-primary-foreground">AEB - A Elétrica do Brasil</div>
-                  <div className="text-3xl font-bold text-primary-foreground drop-shadow-md">R$ {totalPrice.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-primary-foreground drop-shadow-md">R$ {totalPrice.toLocaleString('pt-BR')}</div>
                 </div>
-
-                {/* Competitors */}
                 {competitorPrices && (
                   <>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
                         <span className="font-medium">Concorrente A</span>
-                        <span className="text-lg font-bold text-red-500">R$ {competitorPrices.competitorA.toLocaleString()}</span>
+                        <span className="text-lg font-bold text-red-500">R$ {competitorPrices.competitorA.toLocaleString('pt-BR')}</span>
                       </div>
                       <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
                         <span className="font-medium">Concorrente B</span>
-                        <span className="text-lg font-bold text-red-500">R$ {competitorPrices.competitorB.toLocaleString()}</span>
+                        <span className="text-lg font-bold text-red-500">R$ {competitorPrices.competitorB.toLocaleString('pt-BR')}</span>
                       </div>
                     </div>
-
                     <Separator />
-
-                    {/* Savings */}
                     <div className="text-center p-4 bg-success/10 border border-success/30 rounded-lg">
                       <div className="text-sm text-success-foreground mb-1">Sua Economia</div>
                       <div className="text-2xl font-bold text-success">
-                        R$ {Math.round(competitorPrices.savings).toLocaleString()}
+                        R$ {Math.round(competitorPrices.savings).toLocaleString('pt-BR')}
                       </div>
                     </div>
                   </>
@@ -223,7 +209,6 @@ const Quotation = () => {
               </CardContent>
             </Card>
 
-            {/* Prize Wheel / Contact */}
             <Card className="industrial-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-center gap-2 text-center">
@@ -239,7 +224,6 @@ const Quotation = () => {
                         Informe seu WhatsApp para participar da nossa roleta de prêmios exclusiva!
                       </p>
                     </div>
-                    
                     <div className="space-y-3">
                       <Label htmlFor="phone">WhatsApp</Label>
                       <Input
@@ -251,7 +235,6 @@ const Quotation = () => {
                         className="text-lg"
                       />
                     </div>
-
                     <Button 
                       onClick={handlePhoneSubmit} 
                       className="w-full gradient-primary text-lg py-4"
@@ -278,7 +261,6 @@ const Quotation = () => {
                       <p className="text-lg">Você ganhou:</p>
                       <Badge className="text-lg px-4 py-2 mt-2 bg-primary">{wheelResult}</Badge>
                     </div>
-
                     <Button 
                       onClick={handleGenerateAndShowQR}
                       disabled={isGeneratingPDF}
@@ -287,7 +269,6 @@ const Quotation = () => {
                       <QrCode className="mr-2 h-5 w-5" />
                       {isGeneratingPDF ? "GERANDO..." : "VER QR CODE DO ORÇAMENTO"}
                     </Button>
-
                     <div className="p-4 bg-success/10 border border-success/30 rounded-lg">
                       <p className="text-sm text-foreground font-medium">
                         <Zap className="inline h-4 w-4 mr-1 text-primary" />
@@ -299,8 +280,6 @@ const Quotation = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* Navigation */}
           <div className="flex justify-between items-center mt-12">
             <Button 
               variant="outline" 
@@ -311,7 +290,6 @@ const Quotation = () => {
               <ArrowLeft className="mr-2 h-5 w-5" />
               Voltar e Editar
             </Button>
-            
             <Button 
               size="lg" 
               onClick={handleNewQuotation}
