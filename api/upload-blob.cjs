@@ -1,24 +1,29 @@
 // api/upload-blob.cjs
 const { handleUpload } = require('@vercel/blob/client');
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+module.exports = async (request, response) => {
+  if (request.method !== 'POST') {
+    return response.status(405).json({ error: 'Method Not Allowed' });
   }
+
   try {
     const jsonResponse = await handleUpload({
-      body: req.body,
-      request: req,
-      onBeforeGenerateToken: async (pathname) => ({
-        allowedContentTypes: ['application/pdf'],
-      }),
-      onUploadCompleted: async ({ blob }) => {
+      body: request.body,
+      request,
+      onBeforeGenerateToken: async (pathname) => {
+        return {
+          allowedContentTypes: ['application/pdf'],
+          tokenPayload: JSON.stringify({ filename: pathname }),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
         console.log('Upload do blob concluído', blob);
       },
     });
-    return res.status(200).json(jsonResponse);
+
+    return response.status(200).json(jsonResponse);
   } catch (error) {
-    console.error('ERRO AO GERAR TOKEN DE UPLOAD:', error);
-    return res.status(500).json({ error: 'Falha ao processar o upload.' });
+    console.error('ERRO NO HANDLER DE UPLOAD:', error);
+    return response.status(500).json({ error: error.message });
   }
 };
