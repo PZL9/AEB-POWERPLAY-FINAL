@@ -7,10 +7,6 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    // Configuração para a API funcionar no ambiente de desenvolvimento local
-    proxy: {
-      '/api': 'http://localhost:5173'
-    },
   },
   plugins: [
     react(),
