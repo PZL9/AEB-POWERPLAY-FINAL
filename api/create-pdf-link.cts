@@ -1,11 +1,13 @@
-const { put } = require('@vercel/blob');
+// api/create-pdf-link.cts (ou renomeie para .ts)
+import { put } from '@vercel/blob';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const filename = req.query.filename || `orcamento-aeb-${Date.now()}.pdf`;
+  const filename = (req.query.filename as string) || `orcamento-aeb-${Date.now()}.pdf`;
 
   try {
     const blobResult = await put(filename, req, {
@@ -15,7 +17,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json(blobResult);
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('ERRO DETALHADO NO UPLOAD:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido no servidor.';
     return res.status(500).json({ 
@@ -23,4 +25,4 @@ module.exports = async (req, res) => {
       details: errorMessage 
     });
   }
-};
+}

@@ -1,3 +1,5 @@
+// src/pages/Quotation.tsx
+
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -88,22 +90,18 @@ const Quotation = () => {
         body: pdfBlob,
       });
       
-      const responseText = await response.text(); // Primeiro, pegue a resposta como texto
       if (!response.ok) {
-        let errorDetails = "Erro desconhecido na resposta da API.";
+        let errorDetails = `Erro no servidor: ${response.statusText}`;
         try {
-           // Tente analisar o texto como JSON
-          const errorJson = JSON.parse(responseText);
-          errorDetails = errorJson.error || errorJson.details || "A resposta da API não continha detalhes do erro.";
+          const errorJson = await response.json();
+          errorDetails = errorJson.details || errorJson.error || response.statusText;
         } catch (e) {
-          // Se não for JSON, use o texto bruto (pode ser uma página de erro HTML da Vercel)
-          errorDetails = responseText.substring(0, 100); // Limita o tamanho
-          console.error("A resposta da API não era um JSON válido:", responseText);
+          console.error("A resposta da API não era um JSON válido.");
         }
         throw new Error(`Falha no upload: ${errorDetails}`);
       }
 
-      const newBlob = JSON.parse(responseText);
+      const newBlob = await response.json();
 
       if (newBlob.url) {
         setPublicUrl(newBlob.url);
@@ -145,7 +143,6 @@ const Quotation = () => {
       />
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
-          {/* O resto do seu JSX (layout da página) permanece exatamente o mesmo */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-foreground mb-2">Orçamento Final</h1>
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
