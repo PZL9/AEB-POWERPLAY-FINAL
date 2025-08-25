@@ -47,6 +47,8 @@ const Quotation = () => {
     finalPrice: calculateTransformerPrice(config, true)
   }] : []);
 
+  // CORREÇÃO: A variável `totalPrice` foi movida para fora do `useEffect`
+  // para que fique acessível em todo o componente.
   const totalPrice = quotationItems.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
 
   useEffect(() => {
@@ -76,20 +78,22 @@ const Quotation = () => {
     
     setIsUploading(true);
     setIsQrCodeModalOpen(true);
-    setPublicUrl(null); // Limpa a URL anterior
+    setPublicUrl(null);
 
     try {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
       const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      // Faz o upload para a nossa nova função serverless
-      const response = await fetch(`/api/upload-pdf?filename=${filename}`, {
+      // Chamando a API corrigida
+      const response = await fetch(`/api/create-pdf-link?filename=${filename}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/pdf' },
         body: pdfBlob,
       });
 
       if (!response.ok) {
-        throw new Error('Falha no upload do arquivo.');
+        const errorBody = await response.json().catch(() => ({ error: "Erro desconhecido na resposta da API." }));
+        throw new Error(`Falha no upload: ${errorBody.error || response.statusText}`);
       }
 
       const newBlob = await response.json();
@@ -102,7 +106,8 @@ const Quotation = () => {
 
     } catch (error) {
       console.error(error);
-      toast({ title: "Erro ao gerar link do PDF", description: "Tente novamente.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "Por favor, tente novamente.";
+      toast({ title: "Erro ao gerar link do PDF", description: errorMessage, variant: "destructive" });
       setIsQrCodeModalOpen(false);
     } finally {
       setIsUploading(false);
@@ -133,7 +138,7 @@ const Quotation = () => {
       />
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
-          {/* O restante do seu JSX (layout da página) permanece exatamente o mesmo */}
+          {/* O resto do seu JSX (layout da página) permanece exatamente o mesmo */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-foreground mb-2">Orçamento Final</h1>
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
