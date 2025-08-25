@@ -1,7 +1,7 @@
 import { put } from '@vercel/blob';
 
-// A Vercel disponibiliza `Request` e `Response` globalmente neste ambiente.
-// Nenhuma importação especial é necessária.
+export const runtime = 'edge';
+
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const filename = searchParams.get('filename') || 'orcamento-aeb.pdf';
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
+    console.error('ERRO DETALHADO NO UPLOAD:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido no servidor.';
     return new Response(JSON.stringify({ error: 'Ocorreu um erro ao salvar o PDF.', details: errorMessage }), { 
       status: 500,
@@ -32,5 +33,3 @@ export async function POST(request: Request) {
     });
   }
 }
-
-export const runtime = 'edge';

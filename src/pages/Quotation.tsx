@@ -82,18 +82,29 @@ const Quotation = () => {
       const pdfBlob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
       const filename = `orcamento-aeb-${Date.now()}.pdf`;
 
-      const response = await fetch(`/api/create-pdf-link?filename=${filename}`, {
+      // CORREÇÃO: Usando a URL completa para a chamada da API
+      const apiUrl = `${window.location.origin}/api/create-pdf-link?filename=${filename}`;
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/pdf' },
         body: pdfBlob,
       });
 
+      const responseText = await response.text();
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: "Erro desconhecido na resposta da API." }));
-        throw new Error(`Falha no upload: ${errorBody.error || response.statusText}`);
+        let errorDetails = "Não foi possível ler a resposta do servidor.";
+        try {
+          const errorJson = JSON.parse(responseText);
+          errorDetails = errorJson.error || errorJson.details || "Erro desconhecido.";
+        } catch (e) {
+          // A resposta não era JSON, o que pode indicar um problema de infraestrutura
+          console.error("A resposta da API não era um JSON válido:", responseText);
+        }
+        throw new Error(`Falha no upload: ${errorDetails}`);
       }
 
-      const newBlob = await response.json();
+      const newBlob = JSON.parse(responseText);
 
       if (newBlob.url) {
         setPublicUrl(newBlob.url);
