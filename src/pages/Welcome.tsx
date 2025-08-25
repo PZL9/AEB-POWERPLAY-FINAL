@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sun, Moon, Zap, Users, Factory } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQuotationCounter } from "@/hooks/useQuotationCounter";
-import aebLogo from "@/assets/aeb-logo.png"; // <-- LINHA CORRIGIDA AQUI
+import aebLogo from "@/assets/aeb-logo.png";
 
 const Welcome = () => {
   const navigate = useNavigate();

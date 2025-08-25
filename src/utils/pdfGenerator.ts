@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { CartItem } from '@/types/transformer';
-import aebLogo from '@/assets/aeb-logo.png'; // Importando o logo
+import aebLogo from '@/assets/aeb-logo.png'; 
 
 export const generateQuotationPDF = async (
   items: CartItem[],
@@ -85,7 +85,7 @@ export const generateQuotationPDF = async (
   let totalValue = 0;
   
   items.forEach((item, index) => {
-    const itemHeight = 70 + (item.config.oilType ? 8 : 0);
+    const itemHeight = 70 + (item.config.oilType ? 8 : 0) + (item.config.customName ? 6 : 0);
     checkPageBreak(itemHeight);
     yPos += 12;
 
@@ -130,7 +130,6 @@ export const generateQuotationPDF = async (
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 10;
 
-  // Box de comparação
   doc.setFillColor(lightGrayColor);
   doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 48, 3, 3, 'F');
   
@@ -149,12 +148,11 @@ export const generateQuotationPDF = async (
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(textColor);
   doc.text('Sua Economia na AEB:', margin + 5, yPos + 35);
-  doc.setTextColor('#16A34A'); // Verde Economia
+  doc.setTextColor('#16A34A'); 
   doc.text(`R$ ${Math.round(competitorPrices.savings).toLocaleString('pt-BR')}`, pageWidth - margin - 5, yPos + 35, { align: 'right' });
 
   yPos += 58;
 
-  // Box de Total e Prêmio
   doc.setFillColor(darkGrayColor);
   doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 25, 3, 3, 'F');
 
@@ -169,7 +167,6 @@ export const generateQuotationPDF = async (
 
   yPos += 35;
   
-  // Seção Final com QR Code
   checkPageBreak(50);
   const representativePhone = "5511912345678";
   const orderSummary = items.map(item => `${item.quantity}x Trafo ${item.config.type} ${item.config.power}kVA`).join(', ');
@@ -192,7 +189,7 @@ export const generateQuotationPDF = async (
   } catch (error) {
     console.error('Error generating QR code:', error);
   }
-
+  
   addFooter(pageCount);
   
   return doc.output('blob');

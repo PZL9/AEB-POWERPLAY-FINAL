@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Gift, Zap, ShoppingCart, QrCode } from "lucide-react";
+import { ArrowLeft, Gift, Zap, ShoppingCart, QrCode, Smartphone, MessageSquare } from "lucide-react";
 import { TransformerConfig, CartItem } from "@/types/transformer";
 import { useToast } from "@/hooks/use-toast";
 import { useQuotationCounter } from "@/hooks/useQuotationCounter";
 import { calculateTransformerPrice, generateCompetitorPrices } from "@/utils/pricing";
-import { generateQuotationPDF } from "@/utils/pdfGenerator";
 import InteractivePrizeWheel from "@/components/InteractivePrizeWheel";
-import { PDFQRCodeDialog } from "@/components/PDFQRCodeDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import QRCode from 'qrcode';
 
 const Quotation = () => {
   const location = useLocation();
@@ -32,9 +32,9 @@ const Quotation = () => {
     competitorB: number;
     savings: number;
   } | null>(null);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  
   const [isQrCodeModalOpen, setIsQrCodeModalOpen] = useState(false);
+  const [qrCodeImage, setQrCodeImage] = useState('');
 
   const quotationItems: CartItem[] = cartItems || (config ? [{
     id: "single-item",
@@ -55,7 +55,7 @@ const Quotation = () => {
       const prices = generateCompetitorPrices(totalPrice, configSeed);
       setCompetitorPrices(prices);
     }
-  }, [totalPrice]);
+  }, [totalPrice, quotationItems]);
 
   const handlePhoneSubmit = () => {
     if (!phoneNumber || phoneNumber.length < 10) {
@@ -82,30 +82,27 @@ const Quotation = () => {
 
   const handleGenerateAndShowQR = async () => {
     if (!wheelResult || !competitorPrices) return;
+
+    const representativePhone = "5511912345678"; // IMPORTANTE: Substituir pelo número real
+    const orderSummary = quotationItems.map(item => 
+      `${item.quantity}x Trafo ${item.config.type} ${item.config.power}kVA (${item.config.material}, ${item.config.factorK})`
+    ).join('; ');
     
-    setIsGeneratingPDF(true);
+    const message = `Olá! Tenho interesse no seguinte orçamento gerado no totem da AEB:\n\n*ITENS:*\n${orderSummary}\n\n*VALOR TOTAL:* R$ ${totalPrice.toLocaleString('pt-BR')}\n*PRÊMIO GANHO:* ${wheelResult}\n\n*MEU CONTATO:* ${phoneNumber}`;
+    const whatsappUrl = `https://wa.me/${representativePhone}?text=${encodeURIComponent(message)}`;
+
     try {
-      const blob = await generateQuotationPDF(quotationItems, phoneNumber, wheelResult, competitorPrices);
-      setPdfBlob(blob);
+      const imageUrl = await QRCode.toDataURL(whatsappUrl, { width: 400, margin: 1 });
+      setQrCodeImage(imageUrl);
       setIsQrCodeModalOpen(true);
-      toast({
-        title: "Orçamento Gerado!",
-        description: "Escaneie o QR Code para baixar em seu celular.",
-      });
     } catch (error) {
-      console.error(error);
-      toast({
-        title: "Erro ao gerar PDF",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingPDF(false);
+      console.error("Failed to generate WhatsApp QR Code", error);
+      toast({ title: "Erro ao gerar QR Code", variant: "destructive" });
     }
   };
-
+  
   const handleBack = () => {
-    navigate("/configurator");
+    navigate(cartItems ? "/cart" : "/visualization", { state: { config } });
   };
 
   const handleNewQuotation = () => {
@@ -119,11 +116,30 @@ const Quotation = () => {
 
   return (
     <>
-      <PDFQRCodeDialog
-        pdfBlob={pdfBlob}
-        open={isQrCodeModalOpen}
-        onOpenChange={setIsQrCodeModalOpen}
-      />
+      <Dialog open={isQrCodeModalOpen} onOpenChange={setIsQrCodeModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">Receba seu Orçamento</DialogTitle>
+            <DialogDescription className="text-center text-base">
+              Aponte a câmera no QR Code para iniciar a conversa no WhatsApp e receber seu PDF.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center p-4">
+            {qrCodeImage ? (
+              <img src={qrCodeImage} alt="QR Code para WhatsApp" className="rounded-lg border-4 border-primary" />
+            ) : (
+              <div className="w-64 h-64 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
+                Carregando QR Code...
+              </div>
+            )}
+          </div>
+          <div className="flex items-center justify-center text-muted-foreground mt-4">
+              <Smartphone className="h-5 w-5 mr-2" />
+              <span>Escaneie para falar com um representante.</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="min-h-screen bg-gradient-dark p-8">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 text-center">
@@ -131,80 +147,49 @@ const Quotation = () => {
             <p className="text-xl text-muted-foreground">Seu transformador personalizado está pronto!</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="industrial-card">
+            <Card className="industrial-card lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShoppingCart className="h-5 w-5 text-primary" />
-                  {quotationItems.length === 1 ? "Seu Transformador" : `Seus Transformadores (${quotationItems.length})`}
+                  Resumo do Orçamento
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 max-h-80 overflow-y-auto">
+              <CardContent className="space-y-4">
                 {quotationItems.map((item) => (
                   <div key={item.id} className="border border-border/50 rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div 
-                        className="w-12 h-8 rounded border-2 border-primary/30 flex items-center justify-center text-xs font-bold"
-                        style={{ backgroundColor: item.config.color }}
-                      >
-                        {item.config.customName ? item.config.customName.substring(0, 3) : "AEB"}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-sm">
-                          Transformador {item.config.type === "dry" ? "Seco" : "a Óleo"}
-                        </h4>
-                        <p className="text-xs text-muted-foreground">{item.config.power} kVA</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>Material: {item.config.material === "copper" ? "Cobre" : "Alumínio"}</div>
-                      <div>Fator K: {item.config.factorK}</div>
-                      {item.config.oilType && (
-                        <div className="col-span-2">Óleo: {item.config.oilType === "vegetal" ? "Vegetal" : "Mineral"}</div>
-                      )}
-                    </div>
-                    <div className="mt-3 flex justify-between items-center">
-                      <span className="text-sm">Qtd: {item.quantity}</span>
-                      <span className="font-bold text-primary">R$ {(item.finalPrice * item.quantity).toLocaleString('pt-BR')}</span>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h4 className="font-semibold text-base text-primary">
+                                {item.quantity}x Transformador {item.config.type === "dry" ? "Seco" : "a Óleo"}
+                            </h4>
+                            <p className="text-sm font-bold">{item.config.power} kVA</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {item.config.material === "copper" ? "Cobre" : "Alumínio"} • Fator {item.config.factorK} {item.config.customName ? `• Nome: ${item.config.customName}` : ''}
+                            </p>
+                        </div>
+                        <div className="text-right">
+                             <p className="font-bold text-lg">R$ {(item.finalPrice * item.quantity).toLocaleString('pt-BR')}</p>
+                             <p className="text-xs text-muted-foreground">R$ {item.finalPrice.toLocaleString('pt-BR')} / un.</p>
+                        </div>
                     </div>
                   </div>
                 ))}
-                <Separator />
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total:</span>
-                  <span className="text-primary">R$ {totalPrice.toLocaleString('pt-BR')}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="industrial-card">
-              <CardHeader>
-                <CardTitle className="text-center text-primary">Comparação de Preços</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center p-6 bg-gradient-primary rounded-lg">
-                  <div className="text-sm font-medium mb-1 text-primary-foreground">AEB - A Elétrica do Brasil</div>
-                  <div className="text-3xl font-bold text-primary-foreground drop-shadow-md">R$ {totalPrice.toLocaleString('pt-BR')}</div>
-                </div>
+                <Separator className="my-4"/>
                 {competitorPrices && (
-                  <>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-                        <span className="font-medium">Concorrente A</span>
-                        <span className="text-lg font-bold text-red-500">R$ {competitorPrices.competitorA.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-                        <span className="font-medium">Concorrente B</span>
-                        <span className="text-lg font-bold text-red-500">R$ {competitorPrices.competitorB.toLocaleString('pt-BR')}</span>
-                      </div>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center text-lg">
+                            <span className="text-muted-foreground">Média Concorrentes:</span>
+                            <span className="font-semibold line-through">R$ {((competitorPrices.competitorA + competitorPrices.competitorB) / 2).toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-lg">
+                            <span className="text-muted-foreground">Sua Economia:</span>
+                            <span className="font-semibold text-success">R$ {Math.round(competitorPrices.savings).toLocaleString('pt-BR')}</span>
+                        </div>
+                         <div className="flex justify-between items-center text-2xl font-bold text-primary">
+                            <span>TOTAL AEB:</span>
+                            <span>R$ {totalPrice.toLocaleString('pt-BR')}</span>
+                        </div>
                     </div>
-                    <Separator />
-                    <div className="text-center p-4 bg-success/10 border border-success/30 rounded-lg">
-                      <div className="text-sm text-success-foreground mb-1">Sua Economia</div>
-                      <div className="text-2xl font-bold text-success">
-                        R$ {Math.round(competitorPrices.savings).toLocaleString('pt-BR')}
-                      </div>
-                    </div>
-                  </>
                 )}
               </CardContent>
             </Card>
@@ -213,7 +198,7 @@ const Quotation = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-center gap-2 text-center">
                   <Gift className="h-5 w-5 text-primary" />
-                  Roleta de Premiação
+                  Etapa Final
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -221,7 +206,7 @@ const Quotation = () => {
                   <div className="space-y-6">
                     <div className="text-center">
                       <p className="text-muted-foreground mb-4">
-                        Informe seu WhatsApp para participar da nossa roleta de prêmios exclusiva!
+                        Informe seu WhatsApp para ganhar um prêmio exclusivo!
                       </p>
                     </div>
                     <div className="space-y-3">
@@ -263,18 +248,11 @@ const Quotation = () => {
                     </div>
                     <Button 
                       onClick={handleGenerateAndShowQR}
-                      disabled={isGeneratingPDF}
                       className="w-full gradient-primary text-lg py-6 h-auto"
                     >
-                      <QrCode className="mr-2 h-5 w-5" />
-                      {isGeneratingPDF ? "GERANDO..." : "VER QR CODE DO ORÇAMENTO"}
+                      <MessageSquare className="mr-2 h-5 w-5" />
+                      RECEBER ORÇAMENTO NO WHATSAPP
                     </Button>
-                    <div className="p-4 bg-success/10 border border-success/30 rounded-lg">
-                      <p className="text-sm text-foreground font-medium">
-                        <Zap className="inline h-4 w-4 mr-1 text-primary" />
-                        O PDF inclui um QR Code para falar com nosso representante!
-                      </p>
-                    </div>
                   </div>
                 )}
               </CardContent>

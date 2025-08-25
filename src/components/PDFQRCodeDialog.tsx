@@ -20,8 +20,10 @@ export const PDFQRCodeDialog = ({ pdfBlob, open, onOpenChange }: PDFQRCodeDialog
 
   useEffect(() => {
     if (pdfBlob && open) {
+      // Create a temporary URL for the Blob
       const url = URL.createObjectURL(pdfBlob);
-      QRCode.toDataURL(url, { width: 400 })
+      
+      QRCode.toDataURL(url, { width: 400, margin: 1 })
         .then(imageUrl => {
           setQrCodeImage(imageUrl);
         })
@@ -29,8 +31,8 @@ export const PDFQRCodeDialog = ({ pdfBlob, open, onOpenChange }: PDFQRCodeDialog
           console.error("Failed to generate QR Code for PDF", err);
         });
       
+      // Clean up the temporary URL when the component unmounts or the dialog closes
       return () => {
-        // Clean up the temporary URL when the dialog is closed or blob changes
         URL.revokeObjectURL(url);
       };
     }
