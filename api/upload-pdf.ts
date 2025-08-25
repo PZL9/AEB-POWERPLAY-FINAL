@@ -5,7 +5,10 @@ export async function POST(request: Request) {
   const filename = searchParams.get('filename') || 'orcamento-aeb.pdf';
   
   if (!request.body) {
-    return new Response(JSON.stringify({ error: 'Nenhum arquivo enviado' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'Nenhum arquivo enviado' }), { 
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -14,12 +17,18 @@ export async function POST(request: Request) {
       contentType: 'application/pdf',
     });
 
-    return new Response(JSON.stringify(blob), { status: 200 });
+    return new Response(JSON.stringify(blob), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     console.error('Erro ao fazer upload para o Vercel Blob:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    return new Response(JSON.stringify({ error: 'Erro Interno do Servidor', details: errorMessage }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Erro Interno do Servidor', details: errorMessage }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 
