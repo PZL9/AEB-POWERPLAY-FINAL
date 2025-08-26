@@ -26,7 +26,7 @@ const PrizeWheel = ({ onResult, orderValue }: PrizeWheelProps) => {
     { name: "4% de desconto", probability: 20, color: "#3B82F6", textColor: "#FFFFFF" },
     { name: "Squeeze", probability: 15, color: "#F59E0B", textColor: "#FFFFFF" },
     { name: "6% de desconto", probability: 15, color: "#8B5CF6", textColor: "#FFFFFF" },
-    { name: "Copo ABMT", probability: 10, color: "#EF4444", textColor: "#FFFFFF" },
+    { name: "Copo AEB", probability: 10, color: "#EF4444", textColor: "#FFFFFF" },
     { name: "Bag de TNT", probability: 3, color: "#06B6D4", textColor: "#FFFFFF" },
     { name: "Caderno", probability: 2, color: "#84CC16", textColor: "#FFFFFF" }
   ];
